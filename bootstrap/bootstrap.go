@@ -26,6 +26,7 @@ type Generator struct {
 	PkgPath, PkgName, PkgBuildTags string
 	Types                          []string
 
+	UseFileBuildTags         bool
 	NoStdMarshalers          bool
 	SnakeCase                bool
 	LowerCamelCase           bool
@@ -52,10 +53,10 @@ func (g *Generator) writeStub() error {
 	}
 	defer f.Close()
 
-	if g.PkgBuildTags != "" {
+	if g.UseFileBuildTags && g.PkgBuildTags != "" {
 		fmt.Fprintln(f, "// +build ", g.PkgBuildTags)
 		fmt.Fprintln(f)
-	} else if g.BuildTags != "" {
+	} else if !g.UseFileBuildTags && g.BuildTags != "" {
 		fmt.Fprintln(f, "// +build ", g.BuildTags)
 		fmt.Fprintln(f)
 	}
@@ -116,9 +117,9 @@ func (g *Generator) writeMain() (path string, err error) {
 	fmt.Fprintln(f, "func main() {")
 	fmt.Fprintf(f, "  g := gen.NewGenerator(%q)\n", filepath.Base(g.OutName))
 	fmt.Fprintf(f, "  g.SetPkg(%q, %q)\n", g.PkgName, g.PkgPath)
-	if g.PkgBuildTags != "" {
+	if g.UseFileBuildTags && g.PkgBuildTags != "" {
 		fmt.Fprintf(f, "  g.SetBuildTags(%q)\n", g.PkgBuildTags)
-	} else if g.BuildTags != "" {
+	} else if !g.UseFileBuildTags && g.BuildTags != "" {
 		fmt.Fprintf(f, "  g.SetBuildTags(%q)\n", g.BuildTags)
 	}
 	if g.SnakeCase {

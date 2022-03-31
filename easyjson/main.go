@@ -18,6 +18,7 @@ import (
 
 var buildTags = flag.String("build_tags", "", "build tags to add to generated file")
 var genBuildFlags = flag.String("gen_build_flags", "", "build flags when running the generator while bootstrapping")
+var useFileBuildTags = flag.Bool("use_file_build_tags", false, "use file build tags")
 var snakeCase = flag.Bool("snake_case", false, "use snake_case names instead of CamelCase by default")
 var lowerCamelCase = flag.Bool("lower_camel_case", false, "use lowerCamelCase names instead of CamelCase by default")
 var noStdMarshalers = flag.Bool("no_std_marshalers", false, "don't generate MarshalJSON/UnmarshalJSON funcs")
@@ -86,6 +87,7 @@ func generate(fname string) (err error) {
 		StubsOnly:                *stubs,
 		NoFormat:                 *noformat,
 		SimpleBytes:              *simpleBytes,
+		UseFileBuildTags:         *useFileBuildTags,
 	}
 
 	if err := g.Run(); err != nil {
@@ -112,9 +114,24 @@ func main() {
 	}
 
 	for _, fname := range files {
+		if !filter(fname) {
+			continue
+		}
 		if err := generate(fname); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	}
+}
+
+func excludeTestFiles(fname string) bool {
+	return !strings.HasSuffix(fname, "_test.go")
+}
+
+func excludeEasyjsonFiles(fname string) bool {
+	return !strings.HasSuffix(fname, "_easyjson.go")
+}
+
+func filter(fname string) bool {
+	return excludeTestFiles(fname) && excludeEasyjsonFiles(fname)
 }

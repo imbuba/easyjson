@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"log"
 	"os"
 	"strings"
 )
@@ -123,6 +124,7 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 }
 
 func (p *Parser) Parse(fname string, isDir bool) error {
+	log.Println(fname)
 	var err error
 	if p.PkgPath, err = getPkgPath(fname, isDir); err != nil {
 		return err
@@ -130,7 +132,7 @@ func (p *Parser) Parse(fname string, isDir bool) error {
 
 	fset := token.NewFileSet()
 	if isDir {
-		packages, err := parser.ParseDir(fset, fname, excludeTestFiles, parser.ParseComments)
+		packages, err := parser.ParseDir(fset, fname, filter, parser.ParseComments)
 		if err != nil {
 			return err
 		}
@@ -151,4 +153,16 @@ func (p *Parser) Parse(fname string, isDir bool) error {
 
 func excludeTestFiles(fi os.FileInfo) bool {
 	return !strings.HasSuffix(fi.Name(), "_test.go")
+}
+
+func includeGoFiles(fi os.FileInfo) bool {
+	return strings.HasSuffix(fi.Name(), ".go")
+}
+
+func excludeEasyjsonFiles(fi os.FileInfo) bool {
+	return !strings.HasSuffix(fi.Name(), "_easyjson.go")
+}
+
+func filter(fi os.FileInfo) bool {
+	return includeGoFiles(fi) && excludeTestFiles(fi) && excludeEasyjsonFiles(fi)
 }
