@@ -16,15 +16,15 @@ import (
 	"sort"
 )
 
-const genPackage = "github.com/mailru/easyjson/gen"
-const pkgWriter = "github.com/mailru/easyjson/jwriter"
-const pkgLexer = "github.com/mailru/easyjson/jlexer"
+const genPackage = "github.com/imbuba/easyjson/gen"
+const pkgWriter = "github.com/imbuba/easyjson/jwriter"
+const pkgLexer = "github.com/imbuba/easyjson/jlexer"
 
 var buildFlagsRegexp = regexp.MustCompile("'.+'|\".+\"|\\S+")
 
 type Generator struct {
-	PkgPath, PkgName string
-	Types            []string
+	PkgPath, PkgName, PkgBuildTags string
+	Types                          []string
 
 	NoStdMarshalers          bool
 	SnakeCase                bool
@@ -52,7 +52,10 @@ func (g *Generator) writeStub() error {
 	}
 	defer f.Close()
 
-	if g.BuildTags != "" {
+	if g.PkgBuildTags != "" {
+		fmt.Fprintln(f, "// +build ", g.PkgBuildTags)
+		fmt.Fprintln(f)
+	} else if g.BuildTags != "" {
 		fmt.Fprintln(f, "// +build ", g.BuildTags)
 		fmt.Fprintln(f)
 	}
@@ -113,7 +116,9 @@ func (g *Generator) writeMain() (path string, err error) {
 	fmt.Fprintln(f, "func main() {")
 	fmt.Fprintf(f, "  g := gen.NewGenerator(%q)\n", filepath.Base(g.OutName))
 	fmt.Fprintf(f, "  g.SetPkg(%q, %q)\n", g.PkgName, g.PkgPath)
-	if g.BuildTags != "" {
+	if g.PkgBuildTags != "" {
+		fmt.Fprintf(f, "  g.SetBuildTags(%q)\n", g.PkgBuildTags)
+	} else if g.BuildTags != "" {
 		fmt.Fprintf(f, "  g.SetBuildTags(%q)\n", g.BuildTags)
 	}
 	if g.SnakeCase {

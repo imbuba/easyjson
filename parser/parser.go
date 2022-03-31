@@ -16,6 +16,7 @@ const (
 type Parser struct {
 	PkgPath     string
 	PkgName     string
+	BuildTags   string
 	StructNames []string
 	AllStructs  bool
 }
@@ -66,6 +67,21 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 		return v
 	case *ast.File:
 		v.PkgName = n.Name.String()
+		for _, comm := range n.Comments {
+			if comm.Pos() > n.Package {
+				break
+			}
+			if len(comm.List) == 0 {
+				continue
+			}
+			for _, subComm := range comm.List {
+				commText := subComm.Text
+				if strings.HasPrefix(commText, "//go:build ") || strings.HasPrefix(commText, "// +build ") {
+					v.BuildTags = strings.TrimPrefix(strings.TrimPrefix(commText, "//go:build "), "// +build ")
+					return v
+				}
+			}
+		}
 		return v
 
 	case *ast.GenDecl:
