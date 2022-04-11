@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -69,6 +70,10 @@ func generate(fname string) (err error) {
 		trimmedGenBuildFlags = strings.TrimSpace(*genBuildFlags)
 	}
 
+	if len(p.StructNames) == 0 {
+		return nil
+	}
+
 	g := bootstrap.Generator{
 		BuildTags:                trimmedBuildTags,
 		GenBuildFlags:            trimmedGenBuildFlags,
@@ -112,16 +117,41 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
+	alreadyAdded := make(map[string]bool)
 	for _, fname := range files {
-		if !filter(fname) {
-			continue
-		}
-		if err := generate(fname); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+		for _, fp := range getFiles(fname) {
+			if !filter(fp) || alreadyAdded[fp] {
+				continue
+			}
+			alreadyAdded[fp] = true
+			if err := generate(fp); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
 		}
 	}
+}
+
+func getFiles(fname string) []string {
+	result := make([]string, 0)
+	if fileInfo, err := os.Stat(fname); err == nil {
+		if fileInfo.IsDir() {
+			if file, err := os.Open(fname); err == nil {
+				if list, err := file.Readdir(-1); err == nil {
+					for _, name := range list {
+						result = append(result, getFiles(path.Join(fname, name.Name()))...)
+					}
+				}
+			}
+		} else {
+			result = append(result, fname)
+		}
+	}
+	return result
+}
+
+func includeGoFiles(fname string) bool {
+	return strings.HasSuffix(fname, ".go")
 }
 
 func excludeTestFiles(fname string) bool {
@@ -133,5 +163,5 @@ func excludeEasyjsonFiles(fname string) bool {
 }
 
 func filter(fname string) bool {
-	return excludeTestFiles(fname) && excludeEasyjsonFiles(fname)
+	return includeGoFiles(fname) && excludeTestFiles(fname) && excludeEasyjsonFiles(fname)
 }

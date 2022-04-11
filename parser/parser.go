@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"log"
 	"os"
 	"strings"
 )
@@ -124,7 +123,6 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 }
 
 func (p *Parser) Parse(fname string, isDir bool) error {
-	log.Println(fname)
 	var err error
 	if p.PkgPath, err = getPkgPath(fname, isDir); err != nil {
 		return err
