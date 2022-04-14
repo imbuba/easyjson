@@ -333,6 +333,7 @@ func (g *Generator) interfaceIsJsonUnmarshaller(t reflect.Type) bool {
 
 func (g *Generator) genStructFieldDecoder(t reflect.Type, f reflect.StructField) error {
 	jsonName := g.fieldNamer.GetJSONFieldName(t, f)
+	altJsonName := g.fieldNamer.GetAltJSONFieldName(t, f)
 	tags := parseFieldTags(f)
 
 	if tags.omit {
@@ -342,7 +343,11 @@ func (g *Generator) genStructFieldDecoder(t reflect.Type, f reflect.StructField)
 		return errors.New("Mutually exclusive tags are specified: 'intern' and 'nocopy'")
 	}
 
-	fmt.Fprintf(g.out, "    case %q:\n", jsonName)
+	if altJsonName != "" {
+		fmt.Fprintf(g.out, "    case %q, %q:\n", jsonName, altJsonName)
+	} else {
+		fmt.Fprintf(g.out, "    case %q:\n", jsonName)
+	}
 	if err := g.genTypeDecoder(f.Type, "out."+f.Name, tags, 3); err != nil {
 		return err
 	}

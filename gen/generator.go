@@ -20,6 +20,7 @@ const pkgEasyJSON = "github.com/mailru/easyjson"
 // FieldNamer defines a policy for generating names for struct fields.
 type FieldNamer interface {
 	GetJSONFieldName(t reflect.Type, f reflect.StructField) string
+	GetAltJSONFieldName(t reflect.Type, f reflect.StructField) string
 }
 
 // Generator generates the requested marshaler/unmarshalers.
@@ -406,6 +407,14 @@ func (DefaultFieldNamer) GetJSONFieldName(t reflect.Type, f reflect.StructField)
 	return f.Name
 }
 
+func (DefaultFieldNamer) GetAltJSONFieldName(t reflect.Type, f reflect.StructField) string {
+	jsonName := strings.Split(f.Tag.Get("altjson"), ",")[0]
+	if jsonName != "" {
+		return jsonName
+	}
+	return ""
+}
+
 // LowerCamelCaseFieldNamer
 type LowerCamelCaseFieldNamer struct{}
 
@@ -472,6 +481,14 @@ func (LowerCamelCaseFieldNamer) GetJSONFieldName(t reflect.Type, f reflect.Struc
 	return lowerFirst(f.Name)
 }
 
+func (LowerCamelCaseFieldNamer) GetAltJSONFieldName(t reflect.Type, f reflect.StructField) string {
+	jsonName := strings.Split(f.Tag.Get("altjson"), ",")[0]
+	if jsonName != "" {
+		return jsonName
+	}
+	return ""
+}
+
 // SnakeCaseFieldNamer implements CamelCase to snake_case conversion for fields names.
 type SnakeCaseFieldNamer struct{}
 
@@ -527,6 +544,14 @@ func (SnakeCaseFieldNamer) GetJSONFieldName(t reflect.Type, f reflect.StructFiel
 	}
 
 	return camelToSnake(f.Name)
+}
+
+func (SnakeCaseFieldNamer) GetAltJSONFieldName(t reflect.Type, f reflect.StructField) string {
+	jsonName := strings.Split(f.Tag.Get("altjson"), ",")[0]
+	if jsonName != "" {
+		return jsonName
+	}
+	return ""
 }
 
 func joinFunctionNameParts(keepFirst bool, parts ...string) string {
