@@ -66,7 +66,7 @@ func NewGenerator(filename string) *Generator {
 			pkgLexer:        "jlexer",
 			pkgEasyJSON:     "easyjson",
 			"encoding/json": "json",
-			"reflect":       "_",
+			"reflect":       "reflect",
 		},
 		fieldNamer:    DefaultFieldNamer{},
 		marshalers:    make(map[reflect.Type]bool),
@@ -192,6 +192,7 @@ func (g *Generator) printHeader() {
 	fmt.Println("   _ *jlexer.Lexer")
 	fmt.Println("   _ *jwriter.Writer")
 	fmt.Println("   _ easyjson.Marshaler")
+	fmt.Println("   _ reflect.Ptr")
 	fmt.Println(")")
 
 	fmt.Println()
