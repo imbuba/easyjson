@@ -275,7 +275,9 @@ func (g *Generator) genTypeEncoderNoCheck(t reflect.Type, in string, tags fieldT
 				return fmt.Errorf("interface type %v not supported: only interface{} and interfaces that implement json or easyjson Marshaling are allowed", t)
 			}
 		} else {
-			fmt.Fprintln(g.out, ws+"if "+in+" != nil {")
+			fmt.Fprintln(g.out, ws+"if "+in+" == nil || (reflect.ValueOf("+in+").Kind() == reflect.Ptr && reflect.ValueOf("+in+").IsNil()) {")
+			fmt.Fprintln(g.out, ws+`  out.RawString("null")`)
+			fmt.Fprintln(g.out, ws+"} else {")
 			fmt.Fprintln(g.out, ws+"  if m, ok := "+in+".(easyjson.Marshaler); ok {")
 			fmt.Fprintln(g.out, ws+"    m.MarshalEasyJSON(out)")
 			fmt.Fprintln(g.out, ws+"  } else if m, ok := "+in+".(json.Marshaler); ok {")
@@ -283,8 +285,6 @@ func (g *Generator) genTypeEncoderNoCheck(t reflect.Type, in string, tags fieldT
 			fmt.Fprintln(g.out, ws+"  } else {")
 			fmt.Fprintln(g.out, ws+"    out.Raw(json.Marshal("+in+"))")
 			fmt.Fprintln(g.out, ws+"  }")
-			fmt.Fprintln(g.out, ws+"} else {")
-			fmt.Fprintln(g.out, ws+`  out.RawString("null")`)
 			fmt.Fprintln(g.out, ws+"}")
 		}
 	default:
