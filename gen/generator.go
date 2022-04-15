@@ -192,7 +192,7 @@ func (g *Generator) printHeader() {
 	fmt.Println("   _ *jlexer.Lexer")
 	fmt.Println("   _ *jwriter.Writer")
 	fmt.Println("   _ easyjson.Marshaler")
-	fmt.Println("   _ reflect.Ptr")
+	fmt.Println("   _ reflect.Kind")
 	fmt.Println(")")
 
 	fmt.Println()
